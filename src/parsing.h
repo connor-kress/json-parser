@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include "string.h"
 #include "json.h"
+#include "vector.h"
 
 typedef enum {
     Int_t,
@@ -23,8 +24,8 @@ typedef struct {
 } Token;
 
 typedef struct {
-    Token *data;
-    size_t len, cap, curr;
+    Vec data;
+    size_t curr;
 } Tokens;
 
 Json parse_json(const String* string);

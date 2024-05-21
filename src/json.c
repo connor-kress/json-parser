@@ -3,67 +3,40 @@
 #include <stdlib.h>
 #include <string.h>
 #include "json.h"
+#include "vector.h"
 
 void todo() {
     fprintf(stderr, "Not implemented yet");
     exit(1);
 }
 
-void reallocate_list(JsonList *list, size_t size) {
-    list->cap = size;
-    Json *new_arr = malloc(list->cap * sizeof(Json));
-    for (int i = 0; i < list->len; i++) {
-        new_arr[i] = list->data[i];
-    }
-    free(list->data);
-    list->data = new_arr;
+void push_json(Vec *list, Json val) {
+    vec_push(list, &val);
 }
 
-void reallocate_object(JsonObject *list, size_t size) {
-    list->cap = size;
-    KVPair *new_arr = malloc(list->cap * sizeof(KVPair));
-    for (int i = 0; i < list->len; i++) {
-        new_arr[i] = list->data[i];
-    }
-    free(list->data);
-    list->data = new_arr;
-}
-
-void push_json(JsonList *list, Json val) {
-    if (list->len == list->cap) {
-        size_t new_cap = (list->cap == 0) ? 1 : list->cap * 2;
-        reallocate_list(list, new_cap);
-    }
-    list->data[list->len] = val;
-    list->len++;
-}
-
-void add_attr(JsonObject *obj, String key, Json val) {
+void add_attr(Vec *obj, String key, Json val) {
     KVPair pair = {
         .key = key,
         .val = val,
     };
-    if (obj->len == obj->cap) {
-        size_t new_cap = (obj->cap == 0) ? 1 : obj->cap * 2;
-        reallocate_object(obj, new_cap);
-    }
-    obj->data[obj->len] = pair;
-    obj->len++;
+    vec_push(obj, &pair);
 }
 
 void free_json(Json json) {
     if (json.type == JsonList_t) {
-        JsonList *list = json.data;
+        Vec *list = json.data;
         for (size_t i = 0; i < list->len; i++) {
-            free_json(list->data[i]);
+            free_json(*(Json*)vec_get(list, i));
         }
+        free(list->data);
     } else if (json.type == JsonObject_t) {
-        JsonObject *obj = json.data;
+        Vec *obj = json.data;
         for (size_t i = 0; i < obj->len; i++) {
-            KVPair *pair = &obj->data[i];
+            KVPair *pair = vec_get(obj, i);
             free(pair->key.data);
             free_json(pair->val);
         }
+        free(obj->data);
     } else if (json.type == JsonString) {
         String *str = json.data;
         free(str->data);
@@ -90,18 +63,18 @@ void print_json(const Json *json) {
     } else if (json->type == JsonFloat) {
         printf("%f", *(float*)json->data);
     } else if (json->type == JsonList_t) {
-        JsonList *list = json->data;
+        Vec *list = json->data;
         putchar('[');
         for (size_t i = 0; i < list->len; i++) {
-            print_json(&list->data[i]);
+            print_json((Json*)vec_get(list, i));
             if (i != list->len - 1) printf(", ");
         }
         putchar(']');
     } else if (json->type == JsonObject_t) {
-        JsonObject *obj = json->data;
+        Vec *obj = json->data;
         putchar('{');
         for (size_t i = 0; i < obj->len; i++) {
-            KVPair *pair = &obj->data[i];
+            KVPair *pair = vec_get(obj, i);
             print_string_wrapped(&pair->key);
             printf(": ");
             print_json(&pair->val);
@@ -173,25 +146,17 @@ Json json_string_from_cstr(const char *c_str) {
 }
 
 Json new_list() {
-    JsonList *list = malloc(sizeof(JsonList));
-    list->data = NULL;
-    list->len = 0;
-    list->cap = 0;
     Json json = {
         .type = JsonList_t,
-        .data = list,
+        .data = new_heap_vec(sizeof(Json)),
     };
     return json;
 }
 
 Json new_object() {
-    JsonObject *obj = malloc(sizeof(JsonObject));
-    obj->data = NULL;
-    obj->len = 0;
-    obj->cap = 0;
     Json json = {
         .type = JsonObject_t,
-        .data = obj,
+        .data = new_heap_vec(sizeof(KVPair)),
     };
     return json;
 }

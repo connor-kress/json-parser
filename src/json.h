@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "string.h"
+#include "vector.h"
 
 typedef enum {
     JsonObject_t,
@@ -24,27 +25,13 @@ typedef struct {
 } Json;
 
 typedef struct {
-    Json *data;
-    size_t len, cap;
-} JsonList;
-
-typedef struct {
     String key;
     Json val;
 } KVPair;
 
-typedef struct {
-    KVPair *data;
-    size_t len, cap;
-} JsonObject;
+void push_json(Vec *list, Json val);
 
-void reallocate_list(JsonList *list, size_t size);
-
-void reallocate_object(JsonObject *list, size_t size);
-
-void push_json(JsonList *list, Json val);
-
-void add_attr(JsonObject *obj, String key, Json val);
+void add_attr(Vec *obj, String key, Json val);
 
 void free_json(Json json);
 
