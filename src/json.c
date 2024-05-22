@@ -44,19 +44,6 @@ void free_json(Json json) {
     free(json.data);
 }
 
-void print_string(const String *str) {
-    for (size_t i = 0; i < str->len; i++) {
-        putchar(str->data[i]);
-    }
-}
-
-void print_string_wrapped(const String *str) {
-    putchar('"');
-    for (size_t i = 0; i < str->len; i++) {
-        putchar(str->data[i]);
-    }
-    putchar('"');
-}
 void print_json(const Json *json) {
     if (json->type == JsonInt) {
         printf("%d", *(int*)json->data);
