@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
 #include "string.h"
@@ -80,4 +81,22 @@ void push_string(String* string, const String *rhs) {
     char *curr_end = string->data + string->len;
     memcpy(curr_end, rhs->data, rhs->len);
     string->len += rhs->len;
+}
+
+bool string_eq(const String *lhs, const String *rhs) {
+    if (lhs->len != rhs->len) return false;
+    for (size_t i = 0; i < lhs->len; i++) {
+        if (lhs->data[i] != rhs->data[i])
+            return false;
+    }
+    return true;
+}
+
+bool string_eq_cstr(const String *lhs, const char *rhs){
+    if (lhs->len != strlen(rhs)) return false;
+    for (size_t i = 0; i < lhs->len; i++) {
+        if (lhs->data[i] != rhs[i])
+            return false;
+    }
+    return true;
 }

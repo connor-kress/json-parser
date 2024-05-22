@@ -24,4 +24,8 @@ void print_string(const String *string);
 
 void print_string_wrapped(const String *string);
 
+bool string_eq(const String *lhs, const String *rhs);
+
+bool string_eq_cstr(const String *lhs, const char *rhs);
+
 #endif // MY_STRING_H_
