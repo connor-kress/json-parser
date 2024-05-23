@@ -22,7 +22,7 @@ int main() {
     add_attr(obj.data, string_from("first"), int_from(4));
     add_attr(obj.data, string_from("second"), json_string_from_cstr("hello?"));
     add_attr(obj.data, string_from("listy"), list);
-    add_attr(obj.data, string_from("is_dar"), bool_from(true));
+    add_attr(obj.data, string_from("is_dar"), float_from(3.555));
     add_attr(obj.data, string_from("is_ok"), bool_from(false));
     add_attr(obj.data, string_from("is_hot"), new_null());
     print_json(&obj);
@@ -30,13 +30,17 @@ int main() {
 
     free_json(obj);
 
-    String json_str = string_from("{\"the\": [1, 2, 3.67, null]}");
+    // String json_str = string_from("{\"the\": [1, 2, 3.67, null]}");
+    String json_str = string_from("\"string\"");
     bool parsing_err = false;
     Json json = parse_json(&json_str, &parsing_err);
+    printf("back in main\n");
     if (parsing_err) {
         free_json(json);
         return 1;
     }
+    print_json(&json);
+    putchar('\n');
     free_json(json);
     return 0;
 }

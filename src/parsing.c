@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include "string.h"
 #include "json.h"
@@ -29,32 +30,38 @@ void free_token_vec(Vec *tokens) {
             free(t->data);
         }
     }
+    free(tokens->data);
+}
+
+const char *get_token_type_str(const TokenType *type) {
+        if (*type == Numeric_t) {
+            return "Numeric_t";
+        } else if (*type == String_t) {
+            return "String_t";
+        } else if (*type == Keyword) {
+            return "Keyword";
+        } else if (*type == Comma) {
+            return "Comma";
+        } else if (*type == Colon) {
+            return "Colon";
+        } else if (*type == Lcurly) {
+            return "Lcurly";
+        } else if (*type == Rcurly) {
+            return "Rcurly";
+        } else if (*type == Lbracket) {
+            return "Lbracket";
+        } else if (*type == Rbracket) {
+            return "Rbracket";
+        } else {
+            return "UNKNOWN TOKEN TYPE";
+        }
 }
 
 void print_token_vec(const Vec *vec) {
-    char* type_name = "ERROR";
     printf("Tokens = [\n");
     for (size_t i = 0; i < vec->len; i++) {
         Token* t = (Token*)vec_get(vec, i);
-        if (t->type == Numeric_t) {
-            type_name = "Numeric_t";
-        } else if (t->type == String_t) {
-            type_name = "String_t";
-        } else if (t->type == Keyword) {
-            type_name = "Keyword";
-        } else if (t->type == Comma) {
-            type_name = "Comma";
-        } else if (t->type == Colon) {
-            type_name = "Colon";
-        } else if (t->type == Lcurly) {
-            type_name = "Lcurly";
-        } else if (t->type == Rcurly) {
-            type_name = "Rcurly";
-        } else if (t->type == Lbracket) {
-            type_name = "Lbracket";
-        } else if (t->type == Rbracket) {
-            type_name = "Rbracket";
-        }
+        const char *type_name = get_token_type_str(&t->type);
         if (t->data == NULL) {
             printf("\tToken(%s, NULL),\n", type_name);
         } else {
@@ -64,6 +71,7 @@ void print_token_vec(const Vec *vec) {
     printf("]\n");
 }
 
+// read escaped characters correctly
 String *read_string_literal(const String* string, size_t *i) {
     (*i)++; // first quotation
     String *buf = new_heap_string();
@@ -71,16 +79,13 @@ String *read_string_literal(const String* string, size_t *i) {
         char c = string->data[*i];
         if (c == '"') { // second quotation
             (*i)++;
-            break;
+            return buf;
         }
         push_char(buf, c);
     }
-    if (*i >= string->len) {
-        fprintf(stderr, "Error: Failed to close string literal");
-        free(buf->data); free(buf);
-        return NULL;
-    };
-    return buf;
+    fprintf(stderr, "Error: Failed to close string literal\n");
+    free(buf->data); free(buf);
+    return NULL;
 }
 String *read_numeric_literal(const String* string, size_t *i) {
     String *buf = new_heap_string();
@@ -109,7 +114,7 @@ String *read_keyword(const String* string, size_t *i) {
 Tokens tokenize_string(const String* string, bool *did_error) {
     Tokens tokens_obj;
     if (string->len == 0) {
-        fprintf(stderr, "Error: Cannot tokenize empty string");
+        fprintf(stderr, "Error: Cannot tokenize empty string\n");
         *did_error = true;
         return tokens_obj;
     }
@@ -166,7 +171,7 @@ Tokens tokenize_string(const String* string, bool *did_error) {
             // printf("Found keyword: \"%s\"\n", t.data->data);
             vec_push(&tokens, &t);
         } else {
-            fprintf(stderr, "Error: Invalid token '%c'", c);
+            fprintf(stderr, "Error: Invalid token '%c'\n", c);
             free_token_vec(&tokens);
             *did_error = true;
             return tokens_obj;
@@ -178,14 +183,134 @@ Tokens tokenize_string(const String* string, bool *did_error) {
     return tokens_obj;
 }
 
+bool remaining(const Tokens *tokens) {
+    return tokens->curr < tokens->data.len;
+}
+
+const Token *peek_token(const Tokens *tokens) {
+    if (!remaining(tokens)) {
+        fprintf(stderr, "Called peek with no remaining tokens\n");
+        exit(1);
+    }
+    return (const Token*)vec_get(&tokens->data, tokens->curr);
+}
+
+const Token *next_token(Tokens *tokens) {
+    if (!remaining(tokens)) {
+        fprintf(stderr, "Called next with no remaining tokens: %lu < %lu\n", tokens->curr, tokens->data.len);
+        exit(1);
+    }
+    const Token *token = (const Token*)vec_get(&tokens->data, tokens->curr);
+    printf("i: %lu -> %lu\n", tokens->curr, tokens->curr + 1);
+    tokens->curr++;
+    return token;
+}
+
+Json parse_numeric_literal(const Token *token, bool *did_error) {
+    printf("called parse_numeric_literal\n");
+    const String *num_str = token->data;
+    bool is_float = false;
+    for (size_t i = 0; i < num_str->len; i++) {
+        char c = num_str->data[i];
+        if (c == '.' && !is_float) {
+            is_float = true;
+        } else if (!isdigit(c)) {
+            fprintf(stderr, "Error: Invalid literal `%s`\n", num_str->data);
+            *did_error = true;
+            return new_null();
+        }
+    }
+    printf("is_float = %s\n", is_float ? "true" : "false");
+    if (is_float) {
+        float val = atof(num_str->data);
+        return float_from(val);
+    } else {
+        int val = atoi(num_str->data);
+        printf("val = %d\n", val);
+        return int_from(val);
+    }
+}
+
+Json parse_keyword(const Token *token, bool *did_error) {
+    printf("called parse_keyword\n");
+    fprintf(stderr, "parse_keyword not implemented yet\n");
+    *did_error = true;
+    return new_null();
+}
+
+Json parse_json_object(Tokens *tokens, bool *did_error) {
+    printf("called parse_json_object\n");
+    Vec *pairs = new_heap_vec(sizeof(KVPair));
+    const Token *t = next_token(tokens);
+    fprintf(stderr, "parse_json_object not implemented yet\n");
+    for (;;) {
+        *did_error = true;
+        break;
+    }
+    Json json = {
+        .type = JsonObject_t,
+        .data = (void*)pairs,
+    };
+    return json;
+}
+
+Json parse_json_list(Tokens *tokens, bool *did_error) {
+    printf("called parse_json_list\n");
+    Vec *vec = new_heap_vec(sizeof(Json));
+    fprintf(stderr, "parse_json_list not implemented yet\n");
+    for (;;) {
+        *did_error = true;
+        break;
+    }
+    Json json = {
+        .type = JsonList_t,
+        .data = (void*)vec,
+    };
+    return json;
+}
+
+Json parse_json_from_tokens(Tokens *tokens, bool *did_error) {
+    printf("called parse_json_from_tokens\n");
+    Json json;
+    switch (peek_token(tokens)->type) {
+    case Lcurly:
+        printf("case Lcurly caught\n");
+        return parse_json_object(tokens, did_error);
+    case Lbracket:
+        printf("case Lbracket caught\n");
+        return parse_json_list(tokens, did_error);
+    case Numeric_t:
+        printf("case Numeric_t caught\n");
+        return parse_numeric_literal(next_token(tokens), did_error);
+    case Keyword:
+        printf("case Keyword caught\n");
+        return parse_keyword(next_token(tokens), did_error);
+    case String_t:
+        printf("case String_t caught\n");
+        const String *str = next_token(tokens)->data;
+        return json_string_from(copy_heap_string(str));
+    default:
+        fprintf(stderr, "Error: Invalid expression first token: %s\n",
+                get_token_type_str(&peek_token(tokens)->type));
+        *did_error = true;
+        return new_null();
+    }
+}
+
 Json parse_json(const String *string, bool *did_error) {
-    bool token_err = false;
-    Tokens tokens = tokenize_string(string, &token_err);
-    if (token_err) {
+    bool tokenization_error = false;
+    Tokens tokens = tokenize_string(string, &tokenization_error);
+    if (tokenization_error) {
+        free_token_vec(&tokens.data);
         *did_error = true;
         return new_null();
     }
     print_token_vec(&tokens.data);
+    bool parsing_error = false;
+    Json json = parse_json_from_tokens(&tokens, &parsing_error);
+    printf("back on parse_json\n");
+    if (parsing_error) *did_error = true;
     free_token_vec(&tokens.data);
-    return new_null();
+    printf("returning from parse_json\n");
+    return json;
 }
