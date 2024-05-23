@@ -7,11 +7,11 @@
 #include "vector.h"
 
 typedef enum {
-    Int_t,
-    Float_t,
+    Numeric_t,
     String_t,
-    Null_t,
+    Keyword,
     Comma,
+    Colon,
     Lbracket,
     Rbracket,
     Lcurly,
@@ -28,6 +28,6 @@ typedef struct {
     size_t curr;
 } Tokens;
 
-Json parse_json(const String* string);
+Json parse_json(const String *string, bool *did_error);
 
 #endif // PARSING_H_

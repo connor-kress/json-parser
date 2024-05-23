@@ -30,8 +30,13 @@ int main() {
 
     free_json(obj);
 
-    String num_str = string_from("1234");
-    printf("Length: %lu\n", num_str.len);
-    printf("Val: %d\n", atoi(num_str.data));
+    String json_str = string_from("{\"the\": [1, 2, 3.67, null]}");
+    bool parsing_err = false;
+    Json json = parse_json(&json_str, &parsing_err);
+    if (parsing_err) {
+        free_json(json);
+        return 1;
+    }
+    free_json(json);
     return 0;
 }
