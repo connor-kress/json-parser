@@ -3,17 +3,10 @@
 #include <stdio.h>
 #include "string.h"
 
-void print_string(const String *string) {
-    for (size_t i = 0; i < string->len; i++) {
-        putchar(string->data[i]);
-    }
-}
-
+// print escaped characters correctly
 void print_string_wrapped(const String *string) {
     putchar('"');
-    for (size_t i = 0; i < string->len; i++) {
-        putchar(string->data[i]);
-    }
+    printf("%s", string->data);
     putchar('"');
 }
 
@@ -105,4 +98,22 @@ bool string_eq_cstr(const String *lhs, const char *rhs){
             return false;
     }
     return true;
+}
+
+String copy_string(const String *str) {
+    String new_str;
+    new_str.data = (char*)malloc(str->cap + 1);
+    memcpy(new_str.data, str->data, str->cap + 1);
+    new_str.cap = str->cap;
+    new_str.len = str->len;
+    return new_str;
+}
+
+String *copy_heap_string(const String *str) {
+    String *new_str = (String*)malloc(sizeof(String));
+    new_str->data = (char*)malloc(str->cap + 1);
+    memcpy(new_str->data, str->data, str->cap + 1);
+    new_str->cap = str->cap;
+    new_str->len = str->len;
+    return new_str;
 }

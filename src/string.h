@@ -20,12 +20,14 @@ void push_char(String* string, char c);
 
 void push_string(String* string, const String *rhs);
 
-void print_string(const String *string);
-
 void print_string_wrapped(const String *string);
 
 bool string_eq(const String *lhs, const String *rhs);
 
 bool string_eq_cstr(const String *lhs, const char *rhs);
+
+String copy_string(const String *str);
+
+String *copy_heap_string(const String *str);
 
 #endif // MY_STRING_H_
