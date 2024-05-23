@@ -1,6 +1,8 @@
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "json.h"
+#include "parsing.h"
 
 int main() {
     Json list = new_list();
@@ -27,5 +29,9 @@ int main() {
     putchar('\n');
 
     free_json(obj);
+
+    String num_str = string_from("1234");
+    printf("Length: %lu\n", num_str.len);
+    printf("Val: %d\n", atoi(num_str.data));
     return 0;
 }

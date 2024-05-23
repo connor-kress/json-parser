@@ -19,8 +19,9 @@ void print_string_wrapped(const String *string) {
 
 String *heap_string_from(const char *c_str) {
     size_t len = strlen(c_str);
-    char *str = malloc(len);
-    strcpy(str, c_str);
+    char *str = (char*)malloc(len + 1);
+    memcpy(str, c_str, len);
+    str[len] = '\0';
     String *string = (String*)malloc(sizeof(String));
     string->data = str;
     string->len = len;
@@ -30,8 +31,9 @@ String *heap_string_from(const char *c_str) {
 
 String string_from(const char *c_str) {
     size_t len = strlen(c_str);
-    char *str = malloc(len);
-    strcpy(str, c_str);
+    char *str = (char*)malloc(len + 1);
+    memcpy(str, c_str, len);
+    str[len] = '\0';
     String string = {
         .data = str,
         .len = len,
@@ -42,7 +44,8 @@ String string_from(const char *c_str) {
 
 String *new_heap_string() {
     String *string = (String*)malloc(sizeof(String));
-    string->data = NULL;
+    string->data = (char*)malloc(1);
+    string->data[0] = '\0';
     string->len = 0;
     string->cap = 0;
     return string;
@@ -50,16 +53,17 @@ String *new_heap_string() {
 
 String new_string() {
     String string = {
-        .data = NULL,
+        .data = (char*)malloc(1),
         .len = 0,
         .cap = 0,
     };
+    string.data[0] = '\0';
     return string;
 }
 
 void reallocate_string(String *string, size_t new_cap) {
     string->cap = new_cap;
-    char *new_arr = malloc(string->cap);
+    char *new_arr = (char*)malloc(string->cap + 1);
     memcpy(new_arr, string->data, string->len);
     free(string->data);
     string->data = new_arr;
@@ -71,6 +75,7 @@ void push_char(String* string, char c) {
         reallocate_string(string, new_cap);
     }
     string->data[string->len++] = c;
+    string->data[string->len] = '\0';
 }
 
 void push_string(String* string, const String *rhs) {
@@ -81,6 +86,7 @@ void push_string(String* string, const String *rhs) {
     char *curr_end = string->data + string->len;
     memcpy(curr_end, rhs->data, rhs->len);
     string->len += rhs->len;
+    string->data[string->len] = '\0';
 }
 
 bool string_eq(const String *lhs, const String *rhs) {
