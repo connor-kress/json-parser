@@ -35,8 +35,6 @@ void add_attr(Vec *obj, String key, Json val);
 
 void free_json(Json json);
 
-void print_string(const String *str);
-
 void print_json(const Json *json);
 
 Json int_from(int val);

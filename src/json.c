@@ -82,31 +82,31 @@ void print_json(const Json *json) {
 }
 
 Json int_from(int val) {
-    int *data = malloc(sizeof(int));
+    int *data = (int*)malloc(sizeof(int));
     *data = val;
     Json json = {
         .type = JsonInt,
-        .data = data,
+        .data = (void*)data,
     };
     return json;
 }
 
 Json float_from(float val) {
-    int *data = malloc(sizeof(float));
+    float *data = (float*)malloc(sizeof(float));
     *data = val;
     Json json = {
         .type = JsonFloat,
-        .data = data,
+        .data = (void*)data,
     };
     return json;
 }
 
 Json bool_from(bool val) {
-    int *data = malloc(sizeof(bool));
+    bool *data = (bool*)malloc(sizeof(bool));
     *data = val;
     Json json = {
         .type = JsonBool,
-        .data = data,
+        .data = (void*)data,
     };
     return json;
 }
@@ -122,7 +122,7 @@ Json new_null() {
 Json json_string_from(String* string) {
     Json json = {
         .type = JsonString,
-        .data = string
+        .data = (void*)string,
     };
     return json;
 }
@@ -135,7 +135,7 @@ Json json_string_from_cstr(const char *c_str) {
 Json new_list() {
     Json json = {
         .type = JsonList_t,
-        .data = new_heap_vec(sizeof(Json)),
+        .data = (void*)new_heap_vec(sizeof(Json)),
     };
     return json;
 }
@@ -143,7 +143,7 @@ Json new_list() {
 Json new_object() {
     Json json = {
         .type = JsonObject_t,
-        .data = new_heap_vec(sizeof(KVPair)),
+        .data = (void*)new_heap_vec(sizeof(KVPair)),
     };
     return json;
 }
