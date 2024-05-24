@@ -1,0 +1,32 @@
+{
+    "name": "Mundar",
+    "age": 19.2,
+    "mentalAge": 4.0,
+    "skills": [
+        {
+            "type": "language",
+            "subtype": "spoken",
+            "description": "English"
+        },
+        {
+            "type": "language",
+            "subtype": "coding",
+            "description": "Python"
+        },
+        {
+            "type": "language",
+            "subtype": "coding",
+            "description": "C"
+        },
+        {
+            "type": "instrument",
+            "subtype": null,
+            "description": "Violin"
+        },
+        {
+            "type": "instrument",
+            "subtype": null,
+            "description": "Piano"
+        }
+    ]
+}

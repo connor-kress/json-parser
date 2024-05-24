@@ -110,19 +110,17 @@ Tokens tokenize_string(const String* string, bool *did_error) {
     Vec tokens = new_vec(sizeof(Token));
     size_t i = 0;
     for (;;) {
+        while ( i < string->len && isspace(string->data[i])) { i++; }
         if (i >= string->len) break;
-        while (isspace(string->data[i])) { i++; }
         char c = string->data[i];
         size_t single_char_token_count = sizeof(SINGLE_CHAR_TOKENS)
                                        / sizeof(SINGLE_CHAR_TOKENS[0]);
         bool found_token = false;
         for (size_t c_i = 0; c_i < single_char_token_count; c_i++) {
             if (c != SINGLE_CHAR_TOKENS[c_i]){
-                // printf("char(%c) != char(%c)\n", c, SINGLE_CHAR_TOKENS[c_i]);
                 continue;
             }
             // printf("Found single char token: `%c`\n", c);
-            // printf("c_i = %lu\n", c_i);
             Token t = {
                 .type = SINGLE_CHAR_TOKEN_MAPPINGS[c_i],
                 .data = NULL,
@@ -160,7 +158,7 @@ Tokens tokenize_string(const String* string, bool *did_error) {
             // printf("Found keyword: \"%s\"\n", t.data->data);
             vec_push(&tokens, &t);
         } else {
-            fprintf(stderr, "Error: Invalid token '%c'\n", c);
+            fprintf(stderr, "Error: Invalid token '%c' (%d)\n", c, c);
             free_token_vec(&tokens);
             *did_error = true;
             return tokens_obj;
@@ -196,7 +194,7 @@ const Token *next_token(Tokens *tokens) {
 }
 
 Json parse_numeric_literal(const Token *token, bool *did_error) {
-    printf("called parse_numeric_literal\n");
+    // printf("called parse_numeric_literal\n");
     const String *num_str = token->data;
     bool is_float = false;
     for (size_t i = 0; i < num_str->len; i++) {
@@ -209,7 +207,6 @@ Json parse_numeric_literal(const Token *token, bool *did_error) {
             return new_null();
         }
     }
-    // printf("is_float = %s\n", is_float ? "true" : "false");
     if (is_float) {
         float val = atof(num_str->data);
         return float_from(val);
@@ -220,7 +217,7 @@ Json parse_numeric_literal(const Token *token, bool *did_error) {
 }
 
 Json parse_keyword(const Token *token, bool *did_error) {
-    printf("called parse_keyword\n");
+    // printf("called parse_keyword\n");
     if (string_eq_cstr(token->data, "null")) {
         return new_null();
     } else if (string_eq_cstr(token->data, "true")) {
@@ -237,7 +234,7 @@ Json parse_keyword(const Token *token, bool *did_error) {
 Json parse_json_from_tokens(Tokens *tokens, bool *did_error);
 
 Json parse_json_object(Tokens *tokens, bool *did_error) {
-    printf("called parse_json_object\n");
+    // printf("called parse_json_object\n");
     Vec *pairs = new_heap_vec(sizeof(KVPair));
     Json json = {
         .type = JsonObject_t,
@@ -303,7 +300,7 @@ Json parse_json_object(Tokens *tokens, bool *did_error) {
 }
 
 Json parse_json_list(Tokens *tokens, bool *did_error) {
-    printf("called parse_json_list\n");
+    // printf("called parse_json_list\n");
     Vec *vec = new_heap_vec(sizeof(Json));
     Json json = {
         .type = JsonList_t,
@@ -342,23 +339,18 @@ Json parse_json_list(Tokens *tokens, bool *did_error) {
 }
 
 Json parse_json_from_tokens(Tokens *tokens, bool *did_error) {
-    printf("called parse_json_from_tokens\n");
+    // printf("called parse_json_from_tokens\n");
     Json json;
     switch (peek_token(tokens)->type) {
     case Lcurly:
-        printf("case Lcurly caught\n");
         return parse_json_object(tokens, did_error);
     case Lbracket:
-        printf("case Lbracket caught\n");
         return parse_json_list(tokens, did_error);
     case Numeric_t:
-        printf("case Numeric_t caught\n");
         return parse_numeric_literal(next_token(tokens), did_error);
     case Keyword:
-        printf("case Keyword caught\n");
         return parse_keyword(next_token(tokens), did_error);
-    case String_t:
-        printf("case String_t caught\n");
+    case String_t:;
         const String *str = next_token(tokens)->data;
         return json_string_from(copy_heap_string(str));
     default:
@@ -377,12 +369,12 @@ Json parse_json(const String *string, bool *did_error) {
         *did_error = true;
         return new_null();
     }
-    print_token_vec(&tokens.data);
+    // print_token_vec(&tokens.data);
     bool parsing_error = false;
     Json json = parse_json_from_tokens(&tokens, &parsing_error);
-    printf("back on parse_json\n");
+    // printf("back on parse_json\n");
     if (parsing_error) *did_error = true;
     free_token_vec(&tokens.data);
-    printf("returning from parse_json\n");
+    // printf("returning from parse_json\n");
     return json;
 }
