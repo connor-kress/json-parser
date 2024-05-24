@@ -7,17 +7,6 @@
 #include "vector.h"
 #include "parsing.h"
 
-// typedef enum {
-//     Numeric_t,
-//     String_t,
-//     Keyword,
-//     Comma,
-//     Lbracket,
-//     Rbracket,
-//     Lcurly,
-//     Rcurly,
-// } TokenType;
-
 static char SINGLE_CHAR_TOKENS[] = {',', ':', '[', ']', '{', '}'};
 static TokenType SINGLE_CHAR_TOKEN_MAPPINGS[] =
     {Comma, Colon, Lbracket, Rbracket, Lcurly, Rcurly};
@@ -190,7 +179,7 @@ bool remaining(const Tokens *tokens) {
 const Token *peek_token(const Tokens *tokens) {
     if (!remaining(tokens)) {
         fprintf(stderr, "Called peek with no remaining tokens\n");
-        exit(1);
+        return NULL;
     }
     return (const Token*)vec_get(&tokens->data, tokens->curr);
 }
@@ -198,10 +187,10 @@ const Token *peek_token(const Tokens *tokens) {
 const Token *next_token(Tokens *tokens) {
     if (!remaining(tokens)) {
         fprintf(stderr, "Called next with no remaining tokens: %lu < %lu\n", tokens->curr, tokens->data.len);
-        exit(1);
+        return NULL;
     }
     const Token *token = (const Token*)vec_get(&tokens->data, tokens->curr);
-    printf("i: %lu -> %lu\n", tokens->curr, tokens->curr + 1);
+    // printf("i: %lu -> %lu\n", tokens->curr, tokens->curr + 1);
     tokens->curr++;
     return token;
 }
@@ -220,52 +209,135 @@ Json parse_numeric_literal(const Token *token, bool *did_error) {
             return new_null();
         }
     }
-    printf("is_float = %s\n", is_float ? "true" : "false");
+    // printf("is_float = %s\n", is_float ? "true" : "false");
     if (is_float) {
         float val = atof(num_str->data);
         return float_from(val);
     } else {
         int val = atoi(num_str->data);
-        printf("val = %d\n", val);
         return int_from(val);
     }
 }
 
 Json parse_keyword(const Token *token, bool *did_error) {
     printf("called parse_keyword\n");
-    fprintf(stderr, "parse_keyword not implemented yet\n");
-    *did_error = true;
-    return new_null();
+    if (string_eq_cstr(token->data, "null")) {
+        return new_null();
+    } else if (string_eq_cstr(token->data, "true")) {
+        return bool_from(true);
+    } else if (string_eq_cstr(token->data, "false")) {
+        return bool_from(false);
+    } else {
+        fprintf(stderr, "Error: Invalid keyword `%s`\n", token->data->data);
+        *did_error = true;
+        return new_null();
+    }
 }
+
+Json parse_json_from_tokens(Tokens *tokens, bool *did_error);
 
 Json parse_json_object(Tokens *tokens, bool *did_error) {
     printf("called parse_json_object\n");
     Vec *pairs = new_heap_vec(sizeof(KVPair));
-    const Token *t = next_token(tokens);
-    fprintf(stderr, "parse_json_object not implemented yet\n");
-    for (;;) {
-        *did_error = true;
-        break;
-    }
     Json json = {
         .type = JsonObject_t,
         .data = (void*)pairs,
     };
+    next_token(tokens); // skip '{'
+    bool recursive_error = false;
+    for (;;) {
+        Json key = parse_json_from_tokens(tokens, &recursive_error);
+        if (recursive_error) {
+            free_json(json);
+            *did_error = true;
+            return new_null();
+        }
+        if (key.type != JsonString) {
+            free_json(json);
+            fprintf(stderr, "Error: Expected object key but found `%s` instead\n",
+                    get_json_type_str(&key.type));
+            *did_error = true;
+            return new_null();
+        }
+        const Token *kv_sep = next_token(tokens);
+        if (kv_sep == NULL) {
+            free_json(json);
+            fprintf(stderr, "Error: Unfinished object literal\n");
+            *did_error = true;
+            return new_null();
+        }
+        if (kv_sep->type != Colon) {
+            free_json(json);
+            fprintf(stderr, "Error: Expected colon but found `%s` instead\n",
+                    get_token_type_str(&kv_sep->type));
+            *did_error = true;
+            return new_null();
+        }
+        Json item = parse_json_from_tokens(tokens, &recursive_error);
+        if (recursive_error) {
+            free_json(json);
+            *did_error = true;
+            return new_null();
+        }
+        add_attr(pairs, *(String*)key.data, item);
+        const Token *delim = next_token(tokens);
+        if (delim == NULL) {
+            free_json(json);
+            fprintf(stderr, "Error: Failed to close object literal\n");
+            *did_error = true;
+            return new_null();
+        }
+        if (delim->type == Comma) {
+            continue;
+        } else if (delim->type == Rcurly) {
+            break;
+        } else {
+            free_json(json);
+            fprintf(stderr, "Error: Unexpected token of type `%s` in object\n",
+                    get_token_type_str(&delim->type));
+            *did_error = true;
+            return new_null();
+        }
+    }
     return json;
 }
 
 Json parse_json_list(Tokens *tokens, bool *did_error) {
     printf("called parse_json_list\n");
     Vec *vec = new_heap_vec(sizeof(Json));
-    fprintf(stderr, "parse_json_list not implemented yet\n");
-    for (;;) {
-        *did_error = true;
-        break;
-    }
     Json json = {
         .type = JsonList_t,
         .data = (void*)vec,
     };
+    next_token(tokens); // skip '['
+    bool recursive_error = false;
+    for (;;) {
+        Json item = parse_json_from_tokens(tokens, &recursive_error);
+        if (recursive_error) {
+            free_json(json);
+            *did_error = true;
+            return new_null();
+        }
+        vec_push(vec, &item);
+        const Token *delim = next_token(tokens);
+        if (delim == NULL) {
+            free_json(json);
+            fprintf(stderr, "Error: Failed to close list\n");
+            *did_error = true;
+            return new_null();
+        }
+        if (delim->type == Comma) {
+            continue;
+        } else if (delim->type == Rbracket) {
+            break;
+        } else {
+            free_json(json);
+            fprintf(stderr, "Error: unexpected token of type %s in list\n",
+                    get_token_type_str(&delim->type));
+            *did_error = true;
+            return new_null();
+        }
+    }
     return json;
 }
 

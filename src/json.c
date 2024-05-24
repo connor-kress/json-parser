@@ -10,6 +10,36 @@ void todo() {
     exit(1);
 }
 
+// typedef enum {
+//     JsonObject_t,
+//     JsonList_t,
+//     JsonString,
+//     JsonInt,
+//     JsonFloat,
+//     JsonBool,
+//     JsonNull,
+// } JsonType;
+
+const char *get_json_type_str(const JsonType *type) {
+    if (*type == JsonObject_t) {
+        return "JsonObject_t";
+    } else if (*type == JsonList_t) {
+        return "JsonList_t";
+    } else if (*type == JsonString) {
+        return "JsonString";
+    } else if (*type == JsonInt) {
+        return "JsonInt";
+    } else if (*type == JsonFloat) {
+        return "JsonFloat";
+    } else if (*type == JsonBool) {
+        return "JsonBool";
+    } else if (*type == JsonNull) {
+        return "JsonNull";
+    } else {
+        return "UNKNOWN JSON TYPE";
+    }
+}
+
 void push_json(Vec *list, Json val) {
     vec_push(list, &val);
 }

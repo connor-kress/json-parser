@@ -29,6 +29,8 @@ typedef struct {
     Json val;
 } KVPair;
 
+const char *get_json_type_str(const JsonType *type);
+
 void push_json(Vec *list, Json val);
 
 void add_attr(Vec *obj, String key, Json val);
