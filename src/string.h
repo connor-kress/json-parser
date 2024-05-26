@@ -8,6 +8,8 @@ typedef struct {
     size_t len, cap;
 } String;
 
+void debug_string(const String *string);
+
 String string_from(const char *c_str);
 
 String *heap_string_from(const char *c_str);
@@ -29,5 +31,7 @@ bool string_eq_cstr(const String *lhs, const char *rhs);
 String copy_string(const String *str);
 
 String *copy_heap_string(const String *str);
+
+void write_format(String *buf, const char *format, ...);
 
 #endif // MY_STRING_H_

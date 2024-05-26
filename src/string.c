@@ -1,7 +1,16 @@
+#include <stdarg.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
 #include "string.h"
+
+void debug_string(const String *string) {
+    printf("String {\n");
+    printf("    data: \"%s\",\n", string->data);
+    printf("    len: %lu,\n", string->len);
+    printf("    cap: %lu,\n", string->cap);
+    printf("}\n");
+}
 
 // print escaped characters correctly
 void print_string_wrapped(const String *string) {
@@ -57,6 +66,10 @@ String new_string() {
 void reallocate_string(String *string, size_t new_cap) {
     string->cap = new_cap;
     char *new_arr = (char*)malloc(string->cap + 1);
+    if (new_arr == NULL) {
+        fprintf(stderr, "Error allocating new string buffer");
+        exit(1);
+    }
     memcpy(new_arr, string->data, string->len);
     free(string->data);
     string->data = new_arr;
@@ -116,4 +129,29 @@ String *copy_heap_string(const String *str) {
     new_str->cap = str->cap;
     new_str->len = str->len;
     return new_str;
+}
+
+void write_format(String *buf, const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    int size = vsnprintf(NULL, 0, format, args);
+    if (size < 0) {
+        va_end(args);
+        fprintf(stderr, "Invalid format specified");
+        exit(1);
+    }
+    reallocate_string(buf, buf->cap + size);
+    char *end_ptr = buf->data + buf->len;
+    va_start(args, format);
+    int chars_written = vsnprintf(end_ptr, size + 1, format, args);
+    if (chars_written  < 0) {
+        va_end(args);
+        fprintf(stderr, "Error while writing to buffer");
+        exit(1);
+    }
+    if (size != chars_written) {
+        fprintf(stderr, "Unexpected size and chars_written mismatch\n");
+    }
+    buf->len += chars_written;
+    va_end(args);
 }
