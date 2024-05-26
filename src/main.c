@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "json.h"
 #include "parsing.h"
+#include "string.h"
 
 int main(int argc, char **argv) {
     if (argc != 2) {
@@ -28,11 +29,15 @@ int main(int argc, char **argv) {
     bool parsing_err = false;
     Json json = parse_json(&json_str, &parsing_err);
     if (parsing_err) {
-        free_json(json);
+        free_json(&json);
         return 1;
     }
-    print_json(&json);
-    putchar('\n');
-    free_json(json);
+    String res = stringify(&json);
+    printf("Result: %s\n", res.data);
+
+    free_json(&json);
+    free(json_str.data);
+    free(res.data);
+
     return 0;
 }

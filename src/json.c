@@ -52,63 +52,73 @@ void add_attr(Vec *obj, String key, Json val) {
     vec_push(obj, &pair);
 }
 
-void free_json(Json json) {
-    if (json.type == JsonList_t) {
-        Vec *list = json.data;
+void free_json(Json *json) {
+    if (json->type == JsonList_t) {
+        Vec *list = json->data;
         for (size_t i = 0; i < list->len; i++) {
-            free_json(*(Json*)vec_get(list, i));
+            Json *item = (Json*)vec_get(list, i);
+            free_json(item);
         }
         free(list->data);
-    } else if (json.type == JsonObject_t) {
-        Vec *obj = json.data;
+    } else if (json->type == JsonObject_t) {
+        Vec *obj = (Vec*)json->data;
         for (size_t i = 0; i < obj->len; i++) {
-            KVPair *pair = vec_get(obj, i);
+            KVPair *pair = (KVPair*)vec_get(obj, i);
             free(pair->key.data);
-            free_json(pair->val);
+            free_json(&pair->val);
         }
         free(obj->data);
-    } else if (json.type == JsonString) {
-        String *str = json.data;
+    } else if (json->type == JsonString) {
+        String *str = (String*)json->data;
         free(str->data);
     }
-    free(json.data);
+    free(json->data);
 }
 
-void print_json(const Json *json) {
+void write_json(String *buf, const Json *json) {
     if (json->type == JsonInt) {
-        printf("%d", *(int*)json->data);
+        write_format(buf, "%d", *(int*)json->data);
     } else if (json->type == JsonFloat) {
-        printf("%f", *(float*)json->data);
+        write_format(buf, "%f", *(float*)json->data);
     } else if (json->type == JsonList_t) {
-        Vec *list = json->data;
-        putchar('[');
+        const Vec *list = json->data;
+        push_char(buf, '[');
         for (size_t i = 0; i < list->len; i++) {
-            print_json((Json*)vec_get(list, i));
-            if (i != list->len - 1) printf(", ");
+            const Json *item = vec_get(list, i);
+            write_json(buf, item);
+            if (i != list->len - 1) write_format(buf, ", ");
         }
-        putchar(']');
+        push_char(buf, ']');
     } else if (json->type == JsonObject_t) {
         Vec *obj = json->data;
-        putchar('{');
+        push_char(buf, '{');
         for (size_t i = 0; i < obj->len; i++) {
-            KVPair *pair = vec_get(obj, i);
-            print_string_wrapped(&pair->key);
-            printf(": ");
-            print_json(&pair->val);
-            if (i != obj->len - 1) printf(", ");
+            const KVPair *pair = vec_get(obj, i);
+
+            write_string_repr(buf, &pair->key);
+            write_format(buf, ": ");
+            write_json(buf, &pair->val);
+            if (i != obj->len - 1) write_format(buf, ", ");
         }
-        putchar('}');
+        push_char(buf, '}');
     } else if (json->type == JsonString) {
-        print_string_wrapped((String*)json->data);
+        const String *str = json->data;
+        write_string_repr(buf, str);
     } else if (json->type == JsonBool) {
-        bool *val = (bool*)json->data;
-        printf(*val ? "true" : "false");
+        bool val = *(bool*)json->data;
+        write_format(buf, val ? "true" : "false");
     } else if (json->type == JsonNull) {
-        printf("null");
+        write_format(buf, "null");
     } else {
         fprintf(stderr, "Nonexistent json type");
         exit(1);
     }
+}
+
+String stringify(const Json *json) {
+    String buf = new_string();
+    write_json(&buf, json);
+    return buf;
 }
 
 Json int_from(int val) {

@@ -8,7 +8,7 @@ typedef struct {
     size_t len, cap;
 } String;
 
-void debug_string(const String *string);
+void debug_string(const String *str);
 
 String string_from(const char *c_str);
 
@@ -18,11 +18,11 @@ String *new_heap_string();
 
 String new_string();
 
-void push_char(String* string, char c);
+void push_char(String* buf, char c);
 
-void push_string(String* string, const String *rhs);
+void push_string(String* buf, const String *str);
 
-void print_string_wrapped(const String *string);
+void write_string_repr(String *buf, const String *str);
 
 bool string_eq(const String *lhs, const String *rhs);
 

@@ -245,12 +245,12 @@ Json parse_json_object(Tokens *tokens, bool *did_error) {
     for (;;) {
         Json key = parse_json_from_tokens(tokens, &recursive_error);
         if (recursive_error) {
-            free_json(json);
+            free_json(&json);
             *did_error = true;
             return new_null();
         }
         if (key.type != JsonString) {
-            free_json(json);
+            free_json(&json);
             fprintf(stderr, "Error: Expected object key but found `%s` instead\n",
                     get_json_type_str(&key.type));
             *did_error = true;
@@ -258,13 +258,13 @@ Json parse_json_object(Tokens *tokens, bool *did_error) {
         }
         const Token *kv_sep = next_token(tokens);
         if (kv_sep == NULL) {
-            free_json(json);
+            free_json(&json);
             fprintf(stderr, "Error: Unfinished object literal\n");
             *did_error = true;
             return new_null();
         }
         if (kv_sep->type != Colon) {
-            free_json(json);
+            free_json(&json);
             fprintf(stderr, "Error: Expected colon but found `%s` instead\n",
                     get_token_type_str(&kv_sep->type));
             *did_error = true;
@@ -272,14 +272,14 @@ Json parse_json_object(Tokens *tokens, bool *did_error) {
         }
         Json item = parse_json_from_tokens(tokens, &recursive_error);
         if (recursive_error) {
-            free_json(json);
+            free_json(&json);
             *did_error = true;
             return new_null();
         }
         add_attr(pairs, *(String*)key.data, item);
         const Token *delim = next_token(tokens);
         if (delim == NULL) {
-            free_json(json);
+            free_json(&json);
             fprintf(stderr, "Error: Failed to close object literal\n");
             *did_error = true;
             return new_null();
@@ -289,7 +289,7 @@ Json parse_json_object(Tokens *tokens, bool *did_error) {
         } else if (delim->type == Rcurly) {
             break;
         } else {
-            free_json(json);
+            free_json(&json);
             fprintf(stderr, "Error: Unexpected token of type `%s` in object\n",
                     get_token_type_str(&delim->type));
             *did_error = true;
@@ -311,14 +311,14 @@ Json parse_json_list(Tokens *tokens, bool *did_error) {
     for (;;) {
         Json item = parse_json_from_tokens(tokens, &recursive_error);
         if (recursive_error) {
-            free_json(json);
+            free_json(&json);
             *did_error = true;
             return new_null();
         }
         vec_push(vec, &item);
         const Token *delim = next_token(tokens);
         if (delim == NULL) {
-            free_json(json);
+            free_json(&json);
             fprintf(stderr, "Error: Failed to close list\n");
             *did_error = true;
             return new_null();
@@ -328,7 +328,7 @@ Json parse_json_list(Tokens *tokens, bool *did_error) {
         } else if (delim->type == Rbracket) {
             break;
         } else {
-            free_json(json);
+            free_json(&json);
             fprintf(stderr, "Error: unexpected token of type %s in list\n",
                     get_token_type_str(&delim->type));
             *did_error = true;
