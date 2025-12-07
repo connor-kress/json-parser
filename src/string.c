@@ -19,53 +19,51 @@ void write_string_repr(String *buf, const String *str) {
     push_char(buf, '"');
 }
 
-String *heap_string_from(const char *c_str) {
+void copy_cstr_to_string(String *string, const char *c_str) {
+    if (string->data != NULL) {
+        free(string->data);
+    }
     size_t len = strlen(c_str);
-    char *str = (char*)malloc(len + 1);
-    memcpy(str, c_str, len);
-    str[len] = '\0';
-    String *string = (String*)malloc(sizeof(String));
-    string->data = str;
+    reallocate_string(string, len);
+    memcpy(string->data, c_str, len);
+    string->data[len] = '\0';
     string->len = len;
-    string->cap = len;
-    return string;
 }
 
 String string_from(const char *c_str) {
-    size_t len = strlen(c_str);
-    char *str = (char*)malloc(len + 1);
-    memcpy(str, c_str, len);
-    str[len] = '\0';
-    String string = {
-        .data = str,
-        .len = len,
-        .cap = len,
-    };
+    String string;
+    copy_cstr_to_string(&string, c_str);
     return string;
 }
 
-String *new_heap_string() {
-    String *string = (String*)malloc(sizeof(String));
-    string->data = (char*)malloc(1);
+String *heap_string_from(const char *c_str) {
+    String *string = malloc(sizeof(String));
+    copy_cstr_to_string(string, c_str);
+    return string;
+}
+
+void string_init(String *string) {
+    string->data = malloc(1);
     string->data[0] = '\0';
     string->len = 0;
     string->cap = 0;
+}
+
+String *new_heap_string() {
+    String *string = malloc(sizeof(String));
+    string_init(string);
     return string;
 }
 
 String new_string() {
-    String string = {
-        .data = (char*)malloc(1),
-        .len = 0,
-        .cap = 0,
-    };
-    string.data[0] = '\0';
+    String string;
+    string_init(&string);
     return string;
 }
 
 void reallocate_string(String *string, size_t new_cap) {
     string->cap = new_cap;
-    char *new_arr = (char*)malloc(string->cap + 1);
+    char *new_arr = malloc(string->cap + 1);
     if (new_arr == NULL) {
         fprintf(stderr, "Error allocating new string buffer");
         exit(1);

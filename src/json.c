@@ -5,39 +5,22 @@
 #include "json.h"
 #include "vector.h"
 
-void todo() {
+void TODO() {
     fprintf(stderr, "Not implemented yet");
     exit(1);
 }
 
-// typedef enum {
-//     JsonObject_t,
-//     JsonList_t,
-//     JsonString,
-//     JsonInt,
-//     JsonFloat,
-//     JsonBool,
-//     JsonNull,
-// } JsonType;
-
 const char *get_json_type_str(const JsonType *type) {
-    if (*type == JsonObject_t) {
-        return "JsonObject_t";
-    } else if (*type == JsonList_t) {
-        return "JsonList_t";
-    } else if (*type == JsonString) {
-        return "JsonString";
-    } else if (*type == JsonInt) {
-        return "JsonInt";
-    } else if (*type == JsonFloat) {
-        return "JsonFloat";
-    } else if (*type == JsonBool) {
-        return "JsonBool";
-    } else if (*type == JsonNull) {
-        return "JsonNull";
-    } else {
-        return "UNKNOWN JSON TYPE";
-    }
+    switch (*type) {
+        case JsonObject_t: return "JsonObject_t";
+        case JsonList_t:   return "JsonList_t";
+        case JsonString:   return "JsonString";
+        case JsonInt:      return "JsonInt";
+        case JsonFloat:    return "JsonFloat";
+        case JsonBool:     return "JsonBool";
+        case JsonNull:     return "JsonNull";
+        default:           return "UNKNOWN_TYPE";
+    };
 }
 
 void push_json(Vec *list, Json val) {
@@ -122,49 +105,44 @@ String stringify(const Json *json) {
 }
 
 Json int_from(int val) {
-    int *data = (int*)malloc(sizeof(int));
+    int *data = malloc(sizeof(int));
     *data = val;
-    Json json = {
+    return (Json) {
         .type = JsonInt,
         .data = (void*)data,
     };
-    return json;
 }
 
 Json float_from(float val) {
-    float *data = (float*)malloc(sizeof(float));
+    float *data = malloc(sizeof(float));
     *data = val;
-    Json json = {
+    return (Json) {
         .type = JsonFloat,
-        .data = (void*)data,
+        .data = data,
     };
-    return json;
 }
 
 Json bool_from(bool val) {
-    bool *data = (bool*)malloc(sizeof(bool));
+    bool *data = malloc(sizeof(bool));
     *data = val;
-    Json json = {
+    return (Json) {
         .type = JsonBool,
-        .data = (void*)data,
+        .data = data,
     };
-    return json;
 }
 
 Json new_null() {
-    Json json = {
+    return (Json) {
         .type = JsonNull,
         .data = NULL,
     };
-    return json;
 }
 
 Json json_string_from(String* string) {
-    Json json = {
+    return (Json) {
         .type = JsonString,
-        .data = (void*)string,
+        .data = string,
     };
-    return json;
 }
 
 Json json_string_from_cstr(const char *c_str) {
@@ -173,17 +151,15 @@ Json json_string_from_cstr(const char *c_str) {
 }
 
 Json new_list() {
-    Json json = {
+    return (Json) {
         .type = JsonList_t,
-        .data = (void*)new_heap_vec(sizeof(Json)),
+        .data = new_heap_vec(sizeof(Json)),
     };
-    return json;
 }
 
 Json new_object() {
-    Json json = {
+    return (Json) {
         .type = JsonObject_t,
-        .data = (void*)new_heap_vec(sizeof(KVPair)),
+        .data = new_heap_vec(sizeof(KVPair)),
     };
-    return json;
 }

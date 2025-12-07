@@ -2,22 +2,22 @@
 #include <string.h>
 #include "vector.h"
 
+void vec_init(Vec *vec, size_t item_size) {
+    vec->data = NULL;
+    vec->len = 0;
+    vec->cap = 0;
+    vec->item_size = item_size;
+}
+
 Vec new_vec(size_t item_size) {
-    Vec vec = {
-        .data = NULL,
-        .len = 0,
-        .cap = 0,
-        .item_size = item_size,
-    };
+    Vec vec;
+    vec_init(&vec, item_size);
     return vec;
 }
 
 Vec *new_heap_vec(size_t item_size) {
     Vec *vec = malloc(sizeof(Vec));
-    vec->data = NULL;
-    vec->len = 0;
-    vec->cap = 0;
-    vec->item_size = item_size;
+    vec_init(vec, item_size);
     return vec;
 }
 

@@ -1,7 +1,7 @@
 {
     "name": "Mundar",
     "age": 19.2,
-    "mentalAge": 4.0,
+    "mentalAge": 4,
     "skills": [
         {
             "type": "language",

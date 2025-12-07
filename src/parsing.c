@@ -13,7 +13,7 @@ static TokenType SINGLE_CHAR_TOKEN_MAPPINGS[] =
 
 void free_token_vec(Vec *tokens) {
     for (size_t i = 0; i < tokens->len; i++) {
-        Token* t = (Token*)vec_get(tokens, i);
+        Token* t = vec_get(tokens, i);
         if (t->data != NULL) {
             free(t->data->data);
             free(t->data);
@@ -49,7 +49,7 @@ const char *get_token_type_str(const TokenType *type) {
 void print_token_vec(const Vec *vec) {
     printf("Tokens = [\n");
     for (size_t i = 0; i < vec->len; i++) {
-        Token* t = (Token*)vec_get(vec, i);
+        Token* t = vec_get(vec, i);
         const char *type_name = get_token_type_str(&t->type);
         if (t->data == NULL) {
             printf("\tToken(%s, NULL),\n", type_name);
@@ -62,8 +62,8 @@ void print_token_vec(const Vec *vec) {
 
 // read escaped characters correctly
 String *read_string_literal(const String* string, size_t *i) {
-    (*i)++; // first quotation
     String *buf = new_heap_string();
+    (*i)++; // first quotation
     for (; *i < string->len; (*i)++) {
         char c = string->data[*i];
         if (c == '"') { // second quotation
@@ -101,7 +101,7 @@ String *read_keyword(const String* string, size_t *i) {
 }
 
 Tokens tokenize_string(const String* string, bool *did_error) {
-    Tokens tokens_obj;
+    Tokens tokens_obj = { .data = { .item_size = sizeof(Token) } };
     if (string->len == 0) {
         fprintf(stderr, "Error: Cannot tokenize empty string\n");
         *did_error = true;
@@ -238,7 +238,7 @@ Json parse_json_object(Tokens *tokens, bool *did_error) {
     Vec *pairs = new_heap_vec(sizeof(KVPair));
     Json json = {
         .type = JsonObject_t,
-        .data = (void*)pairs,
+        .data = pairs,
     };
     next_token(tokens); // skip '{'
     bool recursive_error = false;
@@ -304,7 +304,7 @@ Json parse_json_list(Tokens *tokens, bool *did_error) {
     Vec *vec = new_heap_vec(sizeof(Json));
     Json json = {
         .type = JsonList_t,
-        .data = (void*)vec,
+        .data = vec,
     };
     next_token(tokens); // skip '['
     bool recursive_error = false;
@@ -340,7 +340,6 @@ Json parse_json_list(Tokens *tokens, bool *did_error) {
 
 Json parse_json_from_tokens(Tokens *tokens, bool *did_error) {
     // printf("called parse_json_from_tokens\n");
-    Json json;
     switch (peek_token(tokens)->type) {
     case Lcurly:
         return parse_json_object(tokens, did_error);

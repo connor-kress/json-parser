@@ -10,13 +10,19 @@ typedef struct {
 
 void debug_string(const String *str);
 
+void copy_cstr_to_string(String *string, const char *c_str);
+
 String string_from(const char *c_str);
 
 String *heap_string_from(const char *c_str);
 
+void string_init(String* string);
+
 String *new_heap_string();
 
 String new_string();
+
+void reallocate_string(String *string, size_t new_cap);
 
 void push_char(String* buf, char c);
 

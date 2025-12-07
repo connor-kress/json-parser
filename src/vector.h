@@ -8,6 +8,8 @@ typedef struct {
     size_t len, cap, item_size;
 } Vec;
 
+void vec_init(Vec *vec, size_t item_size);
+
 Vec new_vec(size_t item_size);
 
 Vec *new_heap_vec(size_t item_size);
